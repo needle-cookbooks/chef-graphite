@@ -8,7 +8,7 @@
 # you will need to change all the occurances of /opt/graphite/
 # in this file to your chosen install location.
 
-<VirtualHost *:80>
+<VirtualHost *:<%= node[:graphite][:listen_port] %>>
         ServerName <%= node[:graphite][:url] %>
         DocumentRoot "/opt/graphite/webapp"
         ErrorLog /opt/graphite/storage/log/webapp/error.log
