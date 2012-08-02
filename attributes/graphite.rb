@@ -1,8 +1,5 @@
 default[:graphite][:version] = "0.9.9"
 default[:graphite][:python_version] = "2.6"
-default[:graphite][:listen_port] = 9191
-# c'mon deep merge, no whammies!
-default[:apache][:listen_ports] = [ "9191" ]
 
 default[:graphite][:carbon][:uri] = "http://launchpadlibrarian.net/82112362/carbon-#{node[:graphite][:version]}.tar.gz"
 default[:graphite][:carbon][:checksum] = "b3d42e3b93c09"
