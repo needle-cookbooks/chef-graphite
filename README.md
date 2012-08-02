@@ -14,6 +14,18 @@ Attributes
 
 * `node[:graphite][:password]` sets the default password for graphite "root" user.
 
+
+AMQP Attributes
+===============
+
+Values in the `node[:graphite][:carbon][:amqp]` hash control the parameters for connecting carbon to an AMQP broker.
+
+* `node[:graphite][:carbon][:amqp][:port]`
+* `node[:graphite][:carbon][:amqp][:vhost]`
+* `node[:graphite][:carbon][:amqp][:user]`
+* `node[:graphite][:carbon][:amqp][:password]`
+* `node[:graphite][:carbon][:amqp][:metric_name_in_body]`
+
 Usage
 =====
 
