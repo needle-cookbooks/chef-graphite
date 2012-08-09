@@ -10,10 +10,11 @@ default[:graphite][:whisper][:checksum] = "66c05eafe8d86"
 default[:graphite][:graphite_web][:uri] = "http://launchpadlibrarian.net/82112308/graphite-web-#{node[:graphite][:version]}.tar.gz"
 default[:graphite][:graphite_web][:checksum] = "cc78bab7fb26b"
 
-default[:graphite][:carbon][:line_receiver_interface] =   "127.0.0.1"
-default[:graphite][:carbon][:pickle_receiver_interface] = "127.0.0.1"
-default[:graphite][:carbon][:cache_query_interface] =     "127.0.0.1"
+
 default[:graphite][:carbon][:amqp] = {}
+default[:graphite][:carbon][:line_receiver_interface] =   "0.0.0.0"
+default[:graphite][:carbon][:pickle_receiver_interface] = "0.0.0.0"
+default[:graphite][:carbon][:cache_query_interface] =     "0.0.0.0"
 
 default[:graphite][:password] = "change_me"
 default[:graphite][:url] = "graphite"
