@@ -2,7 +2,7 @@ package "python-twisted"
 package "python-simplejson"
 require_recipe "python::pip"
 
-pip "txamqp"
+python_pip "txamqp"
 
 version = node[:graphite][:version]
 pyver = node[:graphite][:python_version]
