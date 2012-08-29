@@ -61,6 +61,8 @@ end
 cookbook_file "/opt/graphite/webapp/.htaccess" do
   source 'htaccess'
   action :create
+  owner node[:apache][:user]
+  group node[:apache][:group]
 end
 
 execute "set admin password" do
