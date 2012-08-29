@@ -58,6 +58,11 @@ cookbook_file "/opt/graphite/storage/graphite.db" do
   notifies :run, "execute[set admin password]"
 end
 
+cookbook_file "/opt/graphite/webapp/.htaccess" do
+  source 'htaccess'
+  action :create
+end
+
 execute "set admin password" do
   command "/opt/graphite/bin/set_admin_passwd.py root #{node[:graphite][:password]}"
   action :nothing
