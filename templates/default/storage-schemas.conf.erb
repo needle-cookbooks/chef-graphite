@@ -3,7 +3,22 @@ priority = 0
 pattern = ^stats
 retentions = 60s:14d,5m:90d
 
+[core]
+priority = 0
+pattern = ^core
+retentions = 30s:14d,5m:90d,15m:3y
+
+[events]
+priority = 0
+pattern = ^events
+retentions = 60s:7d,15m:1y
+
+[haystack]
+priority = 0
+pattern = ^haystack
+retentions = 60s:7d,5m:90d,15m:3y
+
 [catchall]
 priority = 0
 pattern = ^.*
-retentions = 60:100800,900:63000
+retentions = 60s:7d,5m:90d,15m:1y
