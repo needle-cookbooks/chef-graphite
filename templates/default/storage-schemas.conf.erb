@@ -1,3 +1,5 @@
+# Dropped off by Chef. DO NOT MODIFY
+
 [server_stats]
 priority = 0
 pattern = ^stats
@@ -6,19 +8,19 @@ retentions = 60s:14d,5m:90d
 [core]
 priority = 0
 pattern = ^core
-retentions = 60s:14d,5m:90d,15m:3y
+retentions = 60s:14d,5m:90d
 
 [events]
 priority = 0
 pattern = ^events
-retentions = 60s:7d,15m:1y
+retentions = 60s:7d,15m:90d
 
 [haystack]
 priority = 0
 pattern = ^haystack
-retentions = 60s:7d,5m:90d,15m:3y
+retentions = 60s:7d,5m:90d
 
 [catchall]
 priority = 0
 pattern = ^.*
-retentions = 60s:7d,5m:90d,15m:1y
+retentions = 60s:7d,5m:90d
