@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: graphite
-# Recipe:: default
+# Recipe:: carbon_runit_twistd
 #
 # Copyright 2011, Heavy Water Software Inc.
 #
@@ -17,17 +17,6 @@
 # limitations under the License.
 #
 
-include_recipe "python"
-if node['graphite']['web_server'] == 'apache'
-  include_recipe "apache2"
+runit_service "twistd-carbon-cache" do
+  subscribes :restart, "template[#{node['graphite']['base_dir']}/conf/carbon.conf]"
 end
-
-if node['graphite']['web']['memcached_hosts'].length > 0
-  include_recipe "memcached"
-end
-
-include_recipe "graphite::user"
-include_recipe "graphite::whisper"
-include_recipe "graphite::carbon"
-include_recipe "graphite::carbon_cache"
-include_recipe "graphite::web"

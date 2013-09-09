@@ -1,64 +1,90 @@
+#
+# Cookbook Name:: graphite
+# Recipe:: carbon
+#
+# Copyright 2011, Heavy Water Software Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 package "python-twisted"
 package "python-simplejson"
 require_recipe "python::pip"
 
 python_pip "txamqp"
 
-version = node[:graphite][:version]
-pyver = node[:graphite][:python_version]
+if node['graphite']['carbon']['enable_amqp']
+  include_recipe "python::pip"
+  python_pip "txamqp" do
+    action :install
+  end
 
-remote_file "/usr/src/carbon-#{version}.tar.gz" do
-  source node[:graphite][:carbon][:uri]
-  checksum node[:graphite][:carbon][:checksum]
-end
-
-execute "untar carbon" do
-  command "tar xzf carbon-#{version}.tar.gz"
-  creates "/usr/src/carbon-#{version}"
-  cwd "/usr/src"
-end
-
-execute "install carbon" do
-  command "python setup.py install"
-  creates "/opt/graphite/lib/carbon-#{version}-py#{pyver}.egg-info"
-  cwd "/usr/src/carbon-#{version}"
-end
-
-template "/opt/graphite/conf/carbon.conf" do
-  owner node['apache']['user']
-  group node['apache']['group']
-  variables( :line_receiver_interface => node[:graphite][:carbon][:line_receiver_interface],
-             :pickle_receiver_interface => node[:graphite][:carbon][:pickle_receiver_interface],
-             :cache_query_interface => node[:graphite][:carbon][:cache_query_interface],
-             :amqp => node[:graphite][:carbon][:amqp] )
-  notifies :restart, "service[carbon-cache]"
-end
-
-template "/opt/graphite/conf/storage-schemas.conf" do
-  owner node['apache']['user']
-  group node['apache']['group']
-  notifies :restart, "service[carbon-cache]"
-end
-
-template "/opt/graphite/conf/storage-aggregation.conf" do
-  owner node['apache']['user']
-  group node['apache']['group']
-  notifies :restart, "service[carbon-cache]"
-end
-
-execute "carbon: change graphite storage permissions to apache user" do
-  command "chown -R #{node['apache']['user']}:#{node['apache']['group']} /opt/graphite/storage"
-  only_if do
-    f = File.stat("/opt/graphite/storage")
-    f.uid == 0 and f.gid == 0
+  amqp_password = node['graphite']['carbon']['amqp_password']
+  if node['graphite']['encrypted_data_bag']['name']
+    data_bag_name = node['graphite']['encrypted_data_bag']['name']
+    data_bag_item = Chef::EncryptedDataBagItem.load(data_bag_name, 'graphite')
+    amqp_password = data_bag_item['amqp_password']
+  else
+    Chef::Log.warn "This recipe uses encrypted data bags for carbon AMQP password but no encrypted data bag name is specified - fallback to node attribute."
   end
 end
 
-directory "/opt/graphite/lib/twisted/plugins/" do
-  owner node['apache']['user']
-  group node['apache']['group']
+version = node['graphite']['version']
+pyver = node['languages']['python']['version'][0..-3]
+
+remote_file "#{Chef::Config[:file_cache_path]}/carbon-#{version}.tar.gz" do
+  source node['graphite']['carbon']['uri']
+  checksum node['graphite']['carbon']['checksum']
 end
 
-runit_service "carbon-cache" do
-  finish_script true
+execute "untar carbon" do
+  command "tar xzof carbon-#{version}.tar.gz"
+  creates "#{Chef::Config[:file_cache_path]}/carbon-#{version}"
+  cwd Chef::Config[:file_cache_path]
 end
+
+execute "install carbon" do
+  command "python setup.py install --prefix=#{node['graphite']['base_dir']} --install-lib=#{node['graphite']['base_dir']}/lib"
+  creates "#{node['graphite']['base_dir']}/lib/carbon-#{version}-py#{pyver}.egg-info"
+  cwd "#{Chef::Config[:file_cache_path]}/carbon-#{version}"
+end
+
+template "#{node['graphite']['base_dir']}/conf/carbon.conf" do
+  owner node['graphite']['user_account']
+  group node['graphite']['group_account']
+  carbon_options = node['graphite']['carbon'].dup
+  carbon_options['amqp_password'] = amqp_password unless amqp_password.nil?
+  variables( :storage_dir => node['graphite']['storage_dir'],
+             :carbon_options => carbon_options
+  )
+end
+
+directory node['graphite']['storage_dir'] do
+  owner node['graphite']['user_account']
+  group node['graphite']['group_account']
+  recursive true
+end
+
+%w{ log whisper }.each do |dir|
+  directory "#{node['graphite']['storage_dir']}/#{dir}" do
+    owner node['graphite']['user_account']
+    group node['graphite']['group_account']
+  end
+end
+
+directory "#{node['graphite']['base_dir']}/lib/twisted/plugins/" do
+  owner node['graphite']['user_account']
+  group node['graphite']['group_account']
+  recursive true
+end
+

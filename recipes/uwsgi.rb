@@ -1,8 +1,9 @@
 #
 # Cookbook Name:: graphite
-# Recipe:: default
+# Recipe:: uwsgi
 #
 # Copyright 2011, Heavy Water Software Inc.
+# Copyright 2013, Enstratius Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,17 +18,20 @@
 # limitations under the License.
 #
 
-include_recipe "python"
-if node['graphite']['web_server'] == 'apache'
-  include_recipe "apache2"
+if node['graphite']['listen_port'].to_i < 1024 and node['graphite']['uwsgi']['listen_http']
+  Chef::Log.error!("uwsgi cannot bind to ports less than 1024. Please set \"node['graphite']['listen_port']\" to an appropriate value")
 end
 
-if node['graphite']['web']['memcached_hosts'].length > 0
-  include_recipe "memcached"
+if node['graphite']['uwsgi']['listen_http'] == false
+  Chef::Log.info("You have disabled uwsgi listening on an http port. Graphite web will not be accessible unless you are talking to the uwsgi socket from an external process")
 end
 
-include_recipe "graphite::user"
-include_recipe "graphite::whisper"
-include_recipe "graphite::carbon"
-include_recipe "graphite::carbon_cache"
-include_recipe "graphite::web"
+include_recipe "runit"
+
+python_pip "uwsgi" do
+  action :install
+end
+
+runit_service "graphite-web" do
+  default_logger true
+end

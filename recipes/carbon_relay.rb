@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: graphite
-# Recipe:: default
+# Recipe:: carbon_relay
 #
-# Copyright 2011, Heavy Water Software Inc.
+# Copyright 2013, Onddo Labs, SL.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,17 +17,21 @@
 # limitations under the License.
 #
 
-include_recipe "python"
-if node['graphite']['web_server'] == 'apache'
-  include_recipe "apache2"
+service_type = node['graphite']['carbon']['service_type']
+
+case service_type
+when 'runit'
+  carbon_relay_service_resource = 'runit_service[carbon-relay]'
+else
+  carbon_relay_service_resource = 'service[carbon-relay]'
 end
 
-if node['graphite']['web']['memcached_hosts'].length > 0
-  include_recipe "memcached"
+template "#{node['graphite']['base_dir']}/conf/relay-rules.conf" do
+  owner node['apache']['user']
+  group node['apache']['group']
+  variables( :relay_rules => node['graphite']['relay_rules'] )
+  notifies :restart, carbon_relay_service_resource
 end
 
-include_recipe "graphite::user"
-include_recipe "graphite::whisper"
-include_recipe "graphite::carbon"
-include_recipe "graphite::carbon_cache"
-include_recipe "graphite::web"
+include_recipe "#{cookbook_name}::#{recipe_name}_#{service_type}"
+
